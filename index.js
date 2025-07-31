@@ -12,20 +12,27 @@ import axios from "axios";
 const app = express();
 const port = 3000;
 const saltRounds = 10;
-env.config();
+require('dotenv').config(); 
+
 app.set('view engine', 'ejs');
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-  })
-);
+const expressSession = require('express-session');
+const pgSession = require('connect-pg-simple')(expressSession);
+
+const sessionStore = new pgSession({
+  pool: db, 
+  tableName: 'session',
+});
+
+app.use(session({
+  store: sessionStore,
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+}));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
