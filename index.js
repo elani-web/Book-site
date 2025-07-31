@@ -1,23 +1,14 @@
 import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
-import bcrypt from "bcrypt";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import flash from "connect-flash";
 import session from "express-session";
-import env from "dotenv";
-import axios from "axios";
+import pgSession from "connect-pg-simple";
+import dotenv from "dotenv";
 
-
-const express = require('express');
-const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
-const { Pool } = require('pg');
-const passport = require('passport');
-const flash = require('connect-flash');
-const bodyParser = require('body-parser');
-require('dotenv').config();
+dotenv.config();
 
 const app = express();
 const port = 3000;
@@ -25,16 +16,17 @@ const saltRounds = 10;
 
 app.set('view engine', 'ejs');
 
+const { Pool } = pg;
 const db = new Pool({
   user: process.env.PG_USER,
   host: process.env.PG_HOST,
   database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
-  max: 1, 
+  max: 1,
 });
 
-const sessionStore = new pgSession({
+const sessionStore = new pgSession(session)({
   pool: db,
   tableName: 'session',
 });
