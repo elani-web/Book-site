@@ -9,18 +9,33 @@ import session from "express-session";
 import env from "dotenv";
 import axios from "axios";
 
+
+const express = require('express');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
+const passport = require('passport');
+const flash = require('connect-flash');
+const bodyParser = require('body-parser');
+require('dotenv').config();
+
 const app = express();
 const port = 3000;
 const saltRounds = 10;
-require('dotenv').config(); 
 
 app.set('view engine', 'ejs');
 
-const expressSession = require('express-session');
-const pgSession = require('connect-pg-simple')(expressSession);
+const db = new Pool({
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,
+  max: 1, 
+});
 
 const sessionStore = new pgSession({
-  pool: db, 
+  pool: db,
   tableName: 'session',
 });
 
@@ -36,15 +51,6 @@ app.use(express.static("public"));
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-
-const db = new pg.Client({
-  user: process.env.PG_USER,
-  host: process.env.PG_HOST,
-  database: process.env.PG_DATABASE,
-  password: process.env.PG_PASSWORD,
-  port: process.env.PG_PORT,
-});
-db.connect();
 
 app.get("/", (req, res) => {
   res.render("home.ejs");
