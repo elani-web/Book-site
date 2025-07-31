@@ -1,0 +1,128 @@
+<%- include('../partials/header.ejs') %> 
+
+<% if (!reviews.length) { %>
+<form action="/bookstore/review" method="POST" style="max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid">                                                                      
+  <input type="hidden" name="book_id" value="<%= book.key %>">
+  <div style="display: flex; margin-bottom: 20px;">
+    <img src="https://covers.openlibrary.org/b/id/<%= book.covers[0] %>-M.jpg" alt="Book Cover" style="width: 150px; height: 200px; margin-right: 20px; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);" onerror="this.src='https://via.placeholder.com/150x200';">
+    <div>
+      <h2 style="font-size: 24px; font-weight: bold; margin-bottom: 10px;"><%= book.title || 'Unknown title' %></h2>
+      <p style="font-size: 18px; color: #666">By <%=author %></p>                           
+    </div>
+  </div>
+  <textarea name="thoughts" placeholder="Write your review here..." style="width: 100%; height: 100px; padding: 10px; font-size: 18px; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin-bottom: 20px;"></textarea>
+  <div style="display: flex; margin-bottom: 20px;">
+    <span class="star" data-value="1" style="font-size: 30px; color: #ccc; cursor: pointer;">&#9733;</span>                                     
+    <span class="star" data-value="2" style="font-size: 30px; color: #ccc; cursor: pointer;">&#9733;</span>
+    <span class="star" data-value="3" style="font-size: 30px; color: #ccc; cursor: pointer;">&#9733;</span>                                      
+    <span class="star" data-value="4" style="font-size: 30px; color: #ccc; cursor: pointer;">&#9733;</span>
+    <span class="star" data-value="5" style="font-size: 30px; color: #ccc; cursor: pointer;">&#9733;</span>                                      
+  </div>
+  <input type="hidden" name="rating" id="rating" value="0">
+  <button style="padding: 10px 20px; font-size: 18px; border: none; border-radius: 10px; background-color: #4CAF50; color: #fff; cursor: pointer;">Submit Review</button>
+</form>
+<% } else { %>
+<div style="width: 70%; margin: 40px auto; text-align: center;margin-bottom: 80px;">
+  <h2 style="margin-bottom: 80px;">Your thought</h2>
+  <ul style="list-style: none; padding: 0; margin: 0;">
+    <% reviews.forEach(review => { %>
+      <li style="padding: 20px; border: 1px solid">
+        <p style="font-size: 18px; font-weight: bold;">Rating: <%= review.rating %>/5 <br>
+          <% for (let i = 1; i <= 5; i++) { %>
+            <% if (i <= review.rating) { %>
+              <span class="star" style="font-size: 30px; color: gold;">&#9733;</span>
+            <% } else { %>
+              <span class="star" style="font-size: 30px; color: #ccc;">&#9733;</span>
+            <% } %>
+          <% } %>
+        </p>
+        <p style="font-size: 16px; padding: 10px; text-align: center; border: 1px solid #ccc; border-radius: 10px; background-color: #fff;"><%= review.review_text %></p>
+        <button class="edit-btn" onclick="location.href='/reviews/<%= review.id %>/edit?bookId=<%= book.key %>'" style="padding: 10px 20px; font-size: 16px; border: none; border-radius: 10px; background-color: #4CAF50; color: #fff; cursor: pointer;">Edit</button>
+      </li>
+    <% }); %>
+  </ul>
+</div>
+<% } %>
+<script>
+  const stars = document.querySelectorAll('.star');
+  const ratingInput = document.getElementById('rating');
+  stars.forEach((star) => {
+    star.addEventListener('click', () => {
+      const ratingValue = star.getAttribute('data-value');
+      ratingInput.value = ratingValue;
+      stars.forEach((s) => s.style.color = '#ccc');
+      for (let i = 0; i < ratingValue; i++) {
+        stars[i].style.color = 'gold';
+      }
+    });
+  });
+
+  // Fetch reviews for a specific book
+  async function fetchReviews(bookId) {
+    try {
+      const response = await fetch(`/books/${bookId}/reviews`);
+      const reviews = await response.json();
+      // Display reviews on the frontend
+      const reviewList = document.getElementById('review-list');
+      if (!reviewList) {
+        const ul = document.createElement('ul');
+        ul.id = 'review-list';
+        document.querySelector('h2').after(ul);
+      }
+      const reviewListNew = document.getElementById('review-list');
+      reviewListNew.innerHTML = '';
+      reviews.forEach(review => {
+        const reviewHtml = `
+          <li>
+            <p>Rating: ${review.rating}</p>
+            <p id="review-text-${review.id}">Review: ${review.review_text}</p>
+            <button class="edit-btn" data-review-id="${review.id}">Edit</button>
+          </li>
+        `;
+        reviewListNew.insertAdjacentHTML('beforeend', reviewHtml);
+      });
+      document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const reviewId = button.dataset.reviewId;
+          const reviewText = document.getElementById(`review-text-${reviewId}`);
+          const textarea = document.createElement('textarea');
+          textarea.value = reviewText.textContent.replace('Review: ', '');
+          reviewText.replaceWith(textarea);
+          const saveBtn = document.createElement('button');
+          saveBtn.textContent = 'Save';
+          button.replaceWith(saveBtn);
+          saveBtn.addEventListener('click', async () => {
+            const newReviewText = textarea.value;
+            try {
+              const response = await fetch(`/reviews/${reviewId}`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  review_text: newReviewText
+                }),
+              });
+              if (response.ok) {
+                reviewText.textContent = `Review: ${newReviewText}`;
+                textarea.replaceWith(reviewText);
+                saveBtn.replaceWith(button);
+              } else {
+                console.error('Error updating review');
+              }
+            } catch (error) {
+              console.error(error);
+            }
+          });
+        });
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const bookId = document.querySelector('input[name="book_id"]').value;
+  fetchReviews(bookId);
+</script>
+
+<%- include('../partials/footer.ejs') %>
