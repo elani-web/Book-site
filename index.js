@@ -26,7 +26,7 @@ const db = new Pool({
   max: 1,
 });
 
-const sessionStore = new pgSession(session)({
+const sessionStore = new (pgSession(session))({
   pool: db,
   tableName: 'session',
 });
