@@ -31,6 +31,15 @@ const db = new Pool({
   max: 1,
 });
 
+db.query('SELECT * FROM session')
+  .then((result) => {
+    console.log('Session table query successful');
+    console.log(result.rows);
+  })
+  .catch((err) => {
+    console.error('Error querying session table:', err);
+  });
+
 const sessionStore = new (pgSession(session))({
   pool: db,
   tableName: 'session',
