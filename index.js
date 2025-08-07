@@ -19,6 +19,13 @@ const saltRounds = 10;
 app.set('view engine', 'ejs');
 
 const { Pool } = pg;
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is not defined');
+}
+if (!process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET environment variable is not defined');
+}
+
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 1,
