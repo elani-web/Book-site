@@ -7,6 +7,8 @@ import flash from "connect-flash";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
+import axios from "axios";
 
 dotenv.config();
 
@@ -33,6 +35,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
 }));
+
+db.on('error', (err) => {
+  console.error('Database connection error:', err);
+});
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
