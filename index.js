@@ -8,6 +8,7 @@ import pgSession from "connect-pg-simple";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import axios from "axios";
+import { Pool } from "pg";
 
 dotenv.config();
 
@@ -16,46 +17,43 @@ const port = 3000;
 const saltRounds = 10;
 
 app.set('view engine', 'ejs');
+app.set('trust proxy', true);
 
-import { Pool } from "pg";
-
-if (!process.env.SESSION_SECRET) {
-  throw new Error('SESSION_SECRET environment variable is not defined');
-}
-
-if (!process.env.PG_USER || !process.env.PG_HOST || !process.env.PG_DATABASE || !process.env.PG_PASSWORD || !process.env.PG_PORT) {
-  throw new Error('PostgreSQL environment variables are not defined');
-}
-
+// PostgreSQL database connection
 const db = new Pool({
   user: process.env.PG_USER,
   host: process.env.PG_HOST,
   database: process.env.PG_DATABASE,
   password: process.env.PG_PASSWORD,
   port: process.env.PG_PORT,
-  max: 1,
 });
 
-db.query('SELECT * FROM session')
-  .then((result) => {
-    console.log('Session table query successful');
-    console.log(result.rows);
-  })
-  .catch((err) => {
-    console.error('Error querying session table:', err);
-  });
+db.on('connect', () => {
+  console.log('Connected to PostgreSQL database');
+});
+db.on('error', (err) => {
+  console.error('Database connection error:', err);
+})
 
+// Persistent session store using connect-pg-simple
 const sessionStore = new (pgSession(session))({
   pool: db,
   tableName: 'session',
 });
 
-app.use(session({
-  store: sessionStore,
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-}));
+// Session configuration
+app.use(
+  session({
+    store: sessionStore,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true, // Use secure cookies since Render uses HTTPS
+      sameSite: 'Lax', // Adjust according to your cross-origin requirements
+    },
+  })
+);
 
 db.on('error', (err) => {
   console.error('Database connection error:', err);
