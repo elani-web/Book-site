@@ -11,11 +11,10 @@ const db = new Pool({
 });
 
 const query = `
-  CREATE TABLE IF NOT EXISTS "session" (
-    "sid" varchar NOT NULL,
-    "sess" json NOT NULL,
-    "expire" timestamp(6) NOT NULL,
-    PRIMARY KEY ("sid")
+  CREATE TABLE IF NOT EXISTS session (
+    sid VARCHAR PRIMARY KEY,
+    sess JSONB NOT NULL,
+    expire TIMESTAMP NOT NULL
   );
 `;
 
