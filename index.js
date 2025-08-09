@@ -28,6 +28,9 @@ if (!process.env.SESSION_SECRET) {
 
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   max: 1,
 });
 
