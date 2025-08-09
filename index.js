@@ -1,6 +1,5 @@
 import express from "express";
 import bodyParser from "body-parser";
-import pg from "pg";
 import passport from "passport";
 import { Strategy } from "passport-local";
 import flash from "connect-flash";
@@ -18,7 +17,7 @@ const saltRounds = 10;
 
 app.set('view engine', 'ejs');
 
-const { Pool } = require('pg');
+import { Pool } from "pg";
 
 if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable is not defined');
