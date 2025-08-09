@@ -18,19 +18,22 @@ const saltRounds = 10;
 
 app.set('view engine', 'ejs');
 
-const { Pool } = pg;
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not defined');
-}
+const { Pool } = require('pg');
+
 if (!process.env.SESSION_SECRET) {
   throw new Error('SESSION_SECRET environment variable is not defined');
 }
 
+if (!process.env.PG_USER || !process.env.PG_HOST || !process.env.PG_DATABASE || !process.env.PG_PASSWORD || !process.env.PG_PORT) {
+  throw new Error('PostgreSQL environment variables are not defined');
+}
+
 const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,
   max: 1,
 });
 
