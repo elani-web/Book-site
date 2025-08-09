@@ -35,22 +35,21 @@ db.on('error', (err) => {
   console.error('Database connection error:', err);
 })
 
-// Persistent session store using connect-pg-simple
-const sessionStore = new (pgSession(session))({
-  pool: db,
-  tableName: 'session',
-});
+const PgSession = pgSession(session);
 
 // Session configuration
 app.use(
   session({
-    store: sessionStore,
+    store: new PgSession({
+      pool: db,
+      tableName: 'session',
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: true, // Use secure cookies since Render uses HTTPS
-      sameSite: 'Lax', // Adjust according to your cross-origin requirements
+      secure: true,
+      sameSite: 'Lax',
     },
   })
 );
