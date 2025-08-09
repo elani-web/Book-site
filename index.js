@@ -38,11 +38,13 @@ db.on('error', (err) => {
 const PgSession = pgSession(session);
 
 // Session configuration
+// Session configuration
 app.use(
   session({
     store: new PgSession({
       pool: db,
       tableName: 'session',
+      createTableIfMissing: true,
     }),
     secret: process.env.SESSION_SECRET,
     resave: false,
